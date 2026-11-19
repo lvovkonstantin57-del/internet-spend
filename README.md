@@ -1,24 +1,24 @@
+<p align="center"><img src=".github/banner.svg" alt="Internet Spend" width="100%"></p>
+
 <div align="center">
 
-# 🌐 Internet Spend
-
-**Мини-приложение «Сколько я трачу на интернеты»: подписки, хостинги и связь в одном списке**
-
-![Python](https://img.shields.io/badge/Python-stdlib%20only-3776AB?style=flat-square&logo=python&logoColor=white)
-![HTML](https://img.shields.io/badge/HTML%20%2B%20JS-E34F26?style=flat-square&logo=html5&logoColor=white)
-![No deps](https://img.shields.io/badge/зависимости-0-2ea44f?style=flat-square)
+![Python](https://img.shields.io/badge/Python-stdlib%20only-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![HTML](https://img.shields.io/badge/HTML%20%2B%20JS-E34F26?style=for-the-badge&logo=html5&logoColor=white)
+![No deps](https://img.shields.io/badge/зависимости-0-2ea44f?style=for-the-badge)
 
 </div>
 
+```
 Записываешь сервисы, за которые платишь (связь, хостинг, подписки), и видишь, сколько уходит в месяц и в год.
+```
 
-## ✨ Особенности
+## 🧾 Особенности
 
 - **Ноль зависимостей:** сервер на стандартной библиотеке Python, интерфейс — один `index.html`
 - **Данные остаются у тебя:** всё хранится локально в `data.json` рядом с приложением
 - **Запуск двойным кликом** на macOS через `start.command` — браузер откроется сам
 
-## 🚀 Запуск
+## ▶️ Запуск
 
 ```bash
 python3 server.py      # → http://127.0.0.1:8765
