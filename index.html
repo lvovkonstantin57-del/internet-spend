@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Интернеты · расходы</title>
+<style>
+  :root{--bg:#0f1115;--card:#171a21;--line:#262a33;--text:#e8eaef;--muted:#8b919e;--acc:#7c9cff;--bad:#ff6b6b}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,sans-serif}
+  .wrap{max-width:860px;margin:0 auto;padding:32px 20px 60px}
+  h1{font-size:22px;margin:0 0 4px}
+  .sub{color:var(--muted);margin-bottom:24px}
+  .totals{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+  .tile .k{color:var(--muted);font-size:13px}
+  .tile .v{font-size:26px;font-weight:650;margin-top:4px;font-variant-numeric:tabular-nums}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px}
+  .card h2{font-size:14px;color:var(--muted);font-weight:500;margin:0 0 12px;text-transform:uppercase;letter-spacing:.04em}
+  form.add{display:grid;grid-template-columns:2fr 1.3fr 1fr .8fr 1.2fr auto;gap:8px}
+  input,select,button{font:inherit;color:var(--text);background:#0f1218;border:1px solid var(--line);border-radius:9px;padding:9px 10px;min-width:0}
+  input:focus,select:focus{outline:none;border-color:var(--acc)}
+  button{cursor:pointer}
+  .primary{background:var(--acc);color:#0b0d12;border:none;font-weight:600}
+  table{width:100%;border-collapse:collapse}
+  th,td{text-align:left;padding:9px 6px;border-bottom:1px solid var(--line)}
+  th{color:var(--muted);font-weight:500;font-size:13px}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+  tr.off td{opacity:.4}
+  .x{background:none;border:none;color:var(--muted);padding:4px 8px}
+  .x:hover{color:var(--bad)}
+  .bars .row{display:grid;grid-template-columns:140px 1fr 110px;gap:10px;align-items:center;margin:7px 0}
+  .bar{height:10px;background:#0f1218;border-radius:6px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--acc);border-radius:6px}
+  .rates{display:flex;gap:14px;flex-wrap:wrap;align-items:center;color:var(--muted)}
+  .rates input{width:90px}
+  .empty{color:var(--muted);padding:14px 0}
+  .saved{color:var(--muted);font-size:12px;float:right}
+  @media(max-width:700px){form.add{grid-template-columns:1fr 1fr}.totals{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Сколько я трачу на интернеты</h1>
+  <div class="sub">Добавь всё, за что платишь. Годовые и квартальные платежи пересчитаются в месяц.</div>
+
+  <div class="totals">
+    <div class="tile"><div class="k">В месяц</div><div class="v" id="tMonth">0 ₽</div></div>
+    <div class="tile"><div class="k">В год</div><div class="v" id="tYear">0 ₽</div></div>
+    <div class="tile"><div class="k">Активных сервисов</div><div class="v" id="tCount">0</div></div>
+  </div>
+
+  <div class="card">
+    <h2>Добавить</h2>
+    <form class="add" id="addForm">
+      <input id="fName" placeholder="Название (напр. МТС, Selectel)" required>
+      <select id="fCat">
+        <option>Домашний интернет</option><option>Мобильная связь</option><option>Сервер / хостинг</option>
+        <option>Домен</option><option>VPN</option><option>Подписка</option><option>Другое</option>
+      </select>
+      <input id="fPrice" type="number" min="0" step="0.01" placeholder="Цена" required>
+      <select id="fCur"><option>RUB</option><option>USD</option><option>EUR</option></select>
+      <select id="fPer">
+        <option value="1">в месяц</option><option value="3">за 3 мес</option>
+        <option value="6">за 6 мес</option><option value="12">в год</option>
+      </select>
+      <button class="primary" type="submit">+</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2>Сервисы <span class="saved" id="saved"></span></h2>
+    <table>
+      <thead><tr><th></th><th>Название</th><th>Категория</th><th class="num">Платёж</th><th class="num">В месяц</th><th></th></tr></thead>
+      <tbody id="list"></tbody>
+    </table>
+    <div class="empty" id="empty">Пока пусто. Добавь первый сервис выше.</div>
+  </div>
+
+  <div class="card">
+    <h2>По категориям</h2>
+    <div class="bars" id="bars"></div>
+  </div>
+
+  <div class="card">
+    <h2>Курсы</h2>
+    <div class="rates">
+      <label>1 USD = <input id="rUSD" type="number" step="0.01"> ₽</label>
+      <label>1 EUR = <input id="rEUR" type="number" step="0.01"> ₽</label>
+    </div>
+  </div>
+</div>
+
+<script>
+let state = {rates:{RUB:1,USD:80,EUR:93}, items:[]};
+const $ = id => document.getElementById(id);
+const rub = n => Math.round(n).toLocaleString('ru-RU') + ' ₽';
+const sym = {RUB:'₽',USD:'$',EUR:'€'};
+const perLabel = {1:'/мес',3:'/3 мес',6:'/6 мес',12:'/год'};
+const monthly = it => it.price * (state.rates[it.cur]||1) / it.period;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+async function load(){
+  try{ const r = await fetch('/api/data'); state = await r.json(); }catch(e){}
+  state.rates = Object.assign({RUB:1,USD:80,EUR:93}, state.rates||{});
+  state.items = state.items||[];
+  render();
+}
+let t;
+function save(){
+  clearTimeout(t);
+  t = setTimeout(async () => {
+    try{
+      await fetch('/api/data',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(state)});
+      $('saved').textContent = 'сохранено';
+    }catch(e){ $('saved').textContent = 'не сохранилось — сервер запущен?'; }
+  }, 250);
+}
+
+function render(){
+  $('rUSD').value = state.rates.USD; $('rEUR').value = state.rates.EUR;
+  const active = state.items.filter(i => i.on !== false);
+  const m = active.reduce((s,i) => s + monthly(i), 0);
+  $('tMonth').textContent = rub(m); $('tYear').textContent = rub(m*12); $('tCount').textContent = active.length;
+  $('empty').style.display = state.items.length ? 'none' : 'block';
+
+  const sorted = [...state.items].sort((a,b) => monthly(b) - monthly(a));
+  $('list').innerHTML = sorted.map(it => `
+    <tr class="${it.on===false?'off':''}">
+      <td><input type="checkbox" data-tog="${it.id}" ${it.on===false?'':'checked'} title="Учитывать"></td>
+      <td>${esc(it.name)}</td><td style="color:var(--muted)">${esc(it.cat)}</td>
+      <td class="num">${it.price.toLocaleString('ru-RU')} ${sym[it.cur]} ${perLabel[it.period]}</td>
+      <td class="num">${rub(monthly(it))}</td>
+      <td><button class="x" data-del="${it.id}" title="Удалить">✕</button></td>
+    </tr>`).join('');
+
+  const cats = {};
+  active.forEach(i => cats[i.cat] = (cats[i.cat]||0) + monthly(i));
+  const max = Math.max(1, ...Object.values(cats));
+  $('bars').innerHTML = Object.entries(cats).sort((a,b)=>b[1]-a[1]).map(([c,v]) => `
+    <div class="row"><span>${esc(c)}</span><div class="bar"><i style="width:${v/max*100}%"></i></div>
+    <span style="text-align:right;font-variant-numeric:tabular-nums">${rub(v)} · ${Math.round(v/m*100)}%</span></div>`).join('')
+    || '<div class="empty">Нет данных</div>';
+}
+
+$('addForm').onsubmit = e => {
+  e.preventDefault();
+  state.items.push({id:Date.now().toString(36), name:$('fName').value.trim(), cat:$('fCat').value,
+    price:parseFloat($('fPrice').value)||0, cur:$('fCur').value, period:+$('fPer').value, on:true});
+  $('fName').value=''; $('fPrice').value=''; $('fName').focus();
+  render(); save();
+};
+$('list').onclick = e => {
+  const d = e.target.dataset;
+  if (d.del){ state.items = state.items.filter(i => i.id !== d.del); render(); save(); }
+};
+$('list').onchange = e => {
+  const id = e.target.dataset.tog; if(!id) return;
+  const it = state.items.find(i => i.id === id); it.on = e.target.checked; render(); save();
+};
+['USD','EUR'].forEach(c => $('r'+c).oninput = e => { state.rates[c] = parseFloat(e.target.value)||0; render(); save(); });
+load();
+</script>
+</body>
+</html>
