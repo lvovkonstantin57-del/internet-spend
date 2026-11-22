@@ -1,4 +1,4 @@
-<p align="center"><img src=".github/banner.svg" alt="Internet Spend" width="100%"></p>
+<h1 align="center">Internet Spend</h1>
 
 <div align="center">
 
